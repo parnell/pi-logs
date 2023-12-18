@@ -41,7 +41,7 @@ def get_module_name():
 APP_ROOT_NAME = get_module_name()
 
 
-def set_app_logging(level : int | str):
+def set_app_level(level : int | str):
     """Set the application logger level
     Args:
         level (int | str): log level
