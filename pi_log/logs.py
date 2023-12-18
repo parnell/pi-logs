@@ -41,7 +41,7 @@ def get_module_name():
 APP_ROOT_NAME = get_module_name()
 
 
-def set_app_level(level : int | str):
+def set_app_level(level: int | str):
     """Set the application logger level
     Args:
         level (int | str): log level
@@ -49,10 +49,11 @@ def set_app_level(level : int | str):
     level = val_to_level(level)
     getLogger(APP_ROOT_NAME, level=level)
 
+
 def get_app_logger(level: int | str = None) -> Logger:
-    """Get the application logger level
-    """
+    """Get the application logger level"""
     return getLogger(APP_ROOT_NAME, level=level)
+
 
 def set_app_root(name: str) -> Logger:
     """Set the root logger name.
@@ -79,7 +80,7 @@ def val_to_level(val: str | int) -> int:
         oval = val
         val = val.strip()
         val = logging.getLevelName(val.upper())
-        if not val or val.startswith("Level "):
+        if not val or isinstance(val, str) and val.startswith("Level "):
             raise ValueError(f"invalid log level: {oval}")
     return val
 
