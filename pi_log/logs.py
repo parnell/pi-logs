@@ -41,6 +41,19 @@ def get_module_name():
 APP_ROOT_NAME = get_module_name()
 
 
+def set_app_logging(level : int | str):
+    """Set the application logger level
+    Args:
+        level (int | str): log level
+    """
+    level = val_to_level(level)
+    getLogger(APP_ROOT_NAME, level=level)
+
+def get_app_logger(level: int | str = None) -> Logger:
+    """Get the application logger level
+    """
+    return getLogger(APP_ROOT_NAME, level=level)
+
 def set_app_root(name: str) -> Logger:
     """Set the root logger name.
     By default the root logger name is already set to the name of the
