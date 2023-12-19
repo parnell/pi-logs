@@ -13,18 +13,17 @@ WARN = logging.WARN
 INFO = logging.INFO
 DEBUG = logging.DEBUG
 NOTSET = logging.NOTSET
+APP_NAME, __ = os.path.splitext(os.path.basename(__name__))
 
-ROOT = logging.getLogger("root")
+_log_info = {"APP_ROOT_NAME": None, "APP_ROOT": None}
 
 
-def get_module_name():
+def _get_application_name():
     """
-    Get the name of the module that calls the logs.py get_module_name() function
+    Get the name of the application that calls the logs.py _get_application_name() function
     """
     import inspect
 
-    # frames = inspect.stack()
-    n = None
     for i in range(len(inspect.stack())):
         frame = inspect.stack()[i]
         module = inspect.getmodule(frame[0])
@@ -32,13 +31,20 @@ def get_module_name():
             continue
         if module:
             module_path = os.path.abspath(module.__file__)
-            n = os.path.basename(os.path.dirname(module_path))
-            if module.__name__ is not None:
-                break
-    return n
+            app_name = os.path.basename(os.path.dirname(module_path))
+            if app_name != APP_NAME and app_name is not None:
+                return app_name
+    ## We didn't find anything but this pi-log app
+    return APP_NAME
 
 
-APP_ROOT_NAME = get_module_name()
+def set_root_level(level: int | str):
+    """Set the root logger level
+    Args:
+        level (int | str): log level
+    """
+    level = val_to_level(level)
+    logging.getLogger().setLevel(level)
 
 
 def set_app_level(level: int | str):
@@ -47,12 +53,16 @@ def set_app_level(level: int | str):
         level (int | str): log level
     """
     level = val_to_level(level)
-    getLogger(APP_ROOT_NAME, level=level)
+    get_app_logger().setLevel(level)
 
 
 def get_app_logger(level: int | str = None) -> Logger:
     """Get the application logger level"""
-    return getLogger(APP_ROOT_NAME, level=level)
+    if _log_info.get("APP_ROOT_NAME") is None:
+        _log_info["APP_ROOT_NAME"] = _get_application_name()
+        _log_info["APP_ROOT"] = getLogger(_log_info["APP_ROOT_NAME"])
+
+    return getLogger(_log_info["APP_ROOT_NAME"], level=level)
 
 
 def set_app_root(name: str) -> Logger:
@@ -64,8 +74,9 @@ def set_app_root(name: str) -> Logger:
     Returns:
         Logger: app root logger
     """
-    global APP_ROOT_NAME
-    APP_ROOT_NAME = name
+    _log_info["APP_ROOT_NAME"] = name
+    _log_info["APP_ROOT"] = getLogger(name)
+
     return getLogger(name)
 
 
@@ -86,7 +97,8 @@ def val_to_level(val: str | int) -> int:
 
 
 def set_log_level(level: int | str, name: str = None):
-    """Set logging to the specified level
+    """Set logging to the specified level.
+    If name not specified, set the application logger level.
 
     Args:
         level (int | str): log level
@@ -94,8 +106,9 @@ def set_log_level(level: int | str, name: str = None):
     """
     level = val_to_level(level)
     if name is None:
-        name = APP_ROOT_NAME
-    log = logging.getLogger(name)
+        log = get_app_logger()
+    else:
+        log = logging.getLogger(name)
     log.setLevel(level)
     log.log(level, f"logging set to {level}")
 
