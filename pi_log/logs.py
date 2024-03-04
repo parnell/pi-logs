@@ -1,9 +1,12 @@
 """
 Logging module
 """
+
 import logging
 import os
+import sys
 from logging import Logger
+from typing import TextIO
 
 CRITICAL = logging.CRITICAL
 FATAL = logging.FATAL
@@ -16,6 +19,8 @@ NOTSET = logging.NOTSET
 APP_NAME, __ = os.path.splitext(os.path.basename(__name__))
 
 _log_info = {"APP_ROOT_NAME": None, "APP_ROOT": None}
+
+log = logging.getLogger(__name__)
 
 
 def _get_application_name():
@@ -65,19 +70,23 @@ def get_app_logger(level: int | str = None) -> Logger:
     return getLogger(_log_info["APP_ROOT_NAME"], level=level)
 
 
-def set_app_root(name: str) -> Logger:
+def set_app_root(name: str, to_stdout: bool = False) -> Logger:
     """Set the root logger name.
     By default the root logger name is already set to the name of the
     module that imports the logs.py module
     Args:
         name (str): logger name
+        to_stdout (bool): add stdout handler
     Returns:
         Logger: app root logger
     """
     _log_info["APP_ROOT_NAME"] = name
-    _log_info["APP_ROOT"] = getLogger(name)
+    log = getLogger(name)
+    _log_info["APP_ROOT"] = log
 
-    return getLogger(name)
+    if to_stdout:
+        add_textio_handler(log, sys.stdout)
+    return log
 
 
 def val_to_level(val: str | int) -> int:
@@ -113,7 +122,25 @@ def set_log_level(level: int | str, name: str = None):
     log.log(level, f"logging set to {level}")
 
 
-def getLogger(name: str = None, level: int | str = None) -> Logger:
+def add_textio_handler(log: Logger, io: TextIO):
+    """
+    Add a StreamHandler to the logger that writes to the specified io object
+    Args:
+        log (Logger): logger
+        io (TextIO): io object
+    Example:
+        import sys
+        import logs
+        log = logs.getLogger(__name__)
+        logs.add_textio_handler(log, sys.stdout)
+    """
+    for h in log.handlers:
+        if isinstance(h, logging.StreamHandler) and "stdout" in str(h):
+            return
+    log.addHandler(logging.StreamHandler(io))
+
+
+def getLogger(name: str = None, level: int | str = None, to_stdout: bool = False) -> Logger:
     """Get a logger with the specified name. If level is specified,
         set the log level.
         Typical usage:
@@ -129,4 +156,7 @@ def getLogger(name: str = None, level: int | str = None) -> Logger:
     log = logging.getLogger(name)
     if level is not None:
         set_log_level(level, name)
+    ### add stdout to StreamHnadler if it isn't already in the handlers
+    if to_stdout:
+        add_textio_handler(log, sys.stdout)
     return log
