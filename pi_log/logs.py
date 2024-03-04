@@ -43,31 +43,40 @@ def _get_application_name():
     return APP_NAME
 
 
-def set_root_level(level: int | str):
+def set_root_level(level: int | str, to_stdout: bool = False):
     """Set the root logger level
     Args:
         level (int | str): log level
     """
     level = val_to_level(level)
-    logging.getLogger().setLevel(level)
+    log = logging.getLogger()
+    log.setLevel(level)
+    if to_stdout:
+        add_textio_handler(log, sys.stdout)
 
 
-def set_app_level(level: int | str):
+def set_app_level(level: int | str, to_stdout: bool = False):
     """Set the application logger level
     Args:
         level (int | str): log level
     """
     level = val_to_level(level)
-    get_app_logger().setLevel(level)
+    log = get_app_logger()
+    log.setLevel(level)
+    if to_stdout:
+        add_textio_handler(log, sys.stdout)
 
 
-def get_app_logger(level: int | str = None) -> Logger:
+def get_app_logger(level: int | str = None, to_stdout: bool = False) -> Logger:
     """Get the application logger level"""
     if _log_info.get("APP_ROOT_NAME") is None:
         _log_info["APP_ROOT_NAME"] = _get_application_name()
         _log_info["APP_ROOT"] = getLogger(_log_info["APP_ROOT_NAME"])
 
-    return getLogger(_log_info["APP_ROOT_NAME"], level=level)
+    log = getLogger(_log_info["APP_ROOT_NAME"], level=level)
+    if to_stdout:
+        add_textio_handler(log, sys.stdout)
+    return log
 
 
 def set_app_root(name: str, to_stdout: bool = False) -> Logger:
