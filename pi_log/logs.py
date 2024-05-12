@@ -23,6 +23,13 @@ _log_info = {"APP_ROOT_NAME": None, "APP_ROOT": None}
 log = logging.getLogger(__name__)
 
 
+def basicConfig(*args, **kwargs):
+    """
+    Pass through to logging.basicConfig
+    """
+    logging.basicConfig(*args, **kwargs)
+
+
 def _get_application_name():
     """
     Get the name of the application that calls the logs.py _get_application_name() function
@@ -149,7 +156,13 @@ def add_textio_handler(log: Logger, io: TextIO):
     log.addHandler(logging.StreamHandler(io))
 
 
-def getLogger(name: str = None, level: int | str = None, to_stdout: bool = False) -> Logger:
+def getLogger(
+    name: str = None,
+    level: int | str = None,
+    to_stdout: bool = False,
+    init_basic_config: bool = False,
+    **basic_config_kwargs,
+) -> Logger:
     """Get a logger with the specified name. If level is specified,
         set the log level.
         Typical usage:
@@ -159,13 +172,48 @@ def getLogger(name: str = None, level: int | str = None, to_stdout: bool = False
     Args:
         name (str): logger name
         level (int | str): log level
+        to_stdout (bool): add stdout handler
+        init_basic_config (bool): call logging.basicConfig
+        basic_config_kwargs (dict): kwargs for logging.basicConfig
     Returns:
         Logger: logger with the specified name
     """
     log = logging.getLogger(name)
     if level is not None:
         set_log_level(level, name)
+    if init_basic_config:
+        basicConfig(**basic_config_kwargs)
     ### add stdout to StreamHnadler if it isn't already in the handlers
     if to_stdout:
         add_textio_handler(log, sys.stdout)
     return log
+
+
+def setLogger(
+    name: str = None,
+    level: int | str = None,
+    to_stdout: bool = False,
+    init_basic_config: bool = False,
+    **basic_config_kwargs,
+) -> Logger:
+    """Set a logger with the specified name. If level is specified,
+        set the log level.
+        Typical usage:
+            import logs
+            logs.setLogger(<my_app_name>, level=logs.DEBUG)
+    Args:
+        name (str): logger name
+        level (int | str): log level
+        to_stdout (bool): add stdout handler
+        init_basic_config (bool): call logging.basicConfig
+        basic_config_kwargs (dict): kwargs for logging.basicConfig
+    Returns:
+        Logger: logger with the specified name
+    """
+    return getLogger(
+        name=name,
+        level=level,
+        to_stdout=to_stdout,
+        init_basic_config=init_basic_config,
+        **basic_config_kwargs,
+    )
